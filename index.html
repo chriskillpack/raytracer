@@ -37,9 +37,9 @@
   </td>
   <td>
     <div style="width:30em">
-      The raytracer is written entirely in JavaScript. It uses an HTML5 <i>canvas</i> element to display the image, which is managed by <a href="http://processingjs.org">Processing.js</a>.
+      The raytracer is written entirely in JavaScript. It uses an HTML5 <i>canvas</i> element to display the image, which is managed by <a href="http://processingjs.org">Processing.js</a>. In time I will be removing the Processing code.
       <br><br>
-      The raytracer currently supports plane and sphere primitives, a material system, multiple lights and multi-sampling in image space. In time interactive features will be added.
+      The raytracer currently supports plane, sphere and box primitives, a material system, multiple lights and multi-sampling in image space. Over time interactive features will be added.
     </div>
   </td>
   </tr>
@@ -47,8 +47,8 @@
 
 <div>
 <p>To me the most interesting part of this raytracer is not that it is written in JavaScript. I wrote it in JavaScript because it's my preferred language of the moment -- it's very quick to iterate in, and distribution is trivial. The quick speed of iteration allows me to play with design ideas, none of which are groundbreaking, but are just things I'm trying to do cleanly. I'm still working out details, but once they are nailed down I'll discuss them below.
-<p>A quick preview: image sampling implemented as a Strategy via an Iterator-style API; a <a href="https://renderman.pixar.com/products/whats_renderman/2.html">Renderman</a>-style <i>illuminate()</i> loop; and, composite Materials. I'd also like to experiment with HTML5's <a href="http://www.whatwg.org/specs/web-workers/current-work/">Web Workers</a>, and maybe turn this into a JavaScript benchmark of some sort.
-<p>Once the code is a little bit cleaner I'll be releasing the source. License and repository TBD.
+<p>A quick preview: image sampling implemented as a Strategy via an Iterator-style API; a <a href="https://renderman.pixar.com/products/whats_renderman/2.html">Renderman</a>-style <i>illuminate()</i> loop; and composite Materials. I'd also like to experiment with HTML5's <a href="http://www.whatwg.org/specs/web-workers/current-work/">Web Workers</a>, and maybe turn this into a JavaScript benchmark of some sort.
+<p><b>Code</b>: I've released the <a href="http://github.com/chriskillpack/raytracer">source code</a> on GitHub under the MIT license.
 </ul>
 </div>
 </body>

@@ -42,15 +42,49 @@ Lights.prototype.addLight = function(light) {
 
 
 /**
- * @param {function(this:Material, light)} closure Callback from the material
- *     shader that will be executed per light.
+ * Iterate over each light in the scene evaluating it's contribution to the
+ * given point and executing the provided material context.
+ * @param {Vector3} pos The world position of the point receiving the
+ *     light.
+ * @param {Vector3} normal The world normal of the point receiving the light.
+ * @param {function(this:Material, irradiance)} closure Material shader
+ *     callback executed for each light.
  * @param {Material} context The context the closure will run in.
  */
-Lights.prototype.forEachLight = function(closure, context) {
+Lights.prototype.forEachLight = function(pos, normal, closure, context) {
   for (var i = 0; i < this.lights_.length; i++) {
-    closure.call(context, this.lights_[i]);
+    var irradiance = this.lights_[i].evaluateLight(pos, normal);
+    closure.call(context, irradiance);
   }
 };
+
+
+/**
+ * A POD structure that holds the result of a lighting calculation.
+ * @param {Vector3} direction The direction of the irradiance on the point.
+ * @param {Vector3} color The color and intensity of the irradiance.
+ * @param {boolean} lightVisible Whether the light can see the point or not.
+ * @constructor
+ */
+function Irradiance(direction, color, lightVisible) {
+  /**
+   * The direction of the irradiance on the point.
+   * @type {Vector3}
+   */
+  this.direction = direction;
+
+  /**
+   * The color and intensity of the irradiance.
+   * @type {Vector3}
+   */
+  this.color = color;
+
+  /**
+   * Whether the light can see the point.
+   * @type {boolean}
+   */
+  this.lightVisible = lightVisible;
+}
 
 
 /**
@@ -91,10 +125,7 @@ DirectionalLight.LIGHT_STEP_SIZE_ = 10000;
  * @param {Vector3} pos The world position of the surface point.
  * @param {Vector3} normal The lighting normal in world space for the surface
  *     point.
- * @return {{lightVisible:boolean, direction:Vector3, color:Vector3}}
- *     lightVisible is true if the point can see the light, direction is the
- *     incoming direction of the light on the point and color holds the color
- *     (and intensity) of the light arriving at the point.
+ * @return {Irradiance} The result of the light evaluation for the input point.
  */
 DirectionalLight.prototype.evaluateLight = function(pos, normal) {
   // Shadow test - can the surface point 'see' the light?
@@ -105,15 +136,10 @@ DirectionalLight.prototype.evaluateLight = function(pos, normal) {
   var lightPosition = Vector3.addMul(pos, this.direction_,
                                      -DirectionalLight.LIGHT_STEP_SIZE_);
   var ray = new Ray(lightPosition, this.direction_);
-  var shadowTest = intersectRayWithScene(ray, true);
-  var lightVisible = (shadowTest === undefined ||
-                      Math.abs(shadowTest.t -
-                               DirectionalLight.LIGHT_STEP_SIZE_) < 1e-2);
-  // Build the response.
-  var r = {};
-  r.lightVisible = lightVisible;
-  r.direction = this.direction_;
-  r.color = this.color_;
+  var shadowTest = intersectRayWithScene(ray);
+  // TODO: This test will be unnecessary once we move to testing ray segments.
+  var lightVisible = Math.abs(shadowTest.t -
+                              DirectionalLight.LIGHT_STEP_SIZE_) < 1e-2;
 
-  return r;
+  return new Irradiance(this.direction_, this.color_, lightVisible);
 };

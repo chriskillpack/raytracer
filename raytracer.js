@@ -35,13 +35,14 @@ function initScene() {
                                         new Vector3(0.4, 0.4, 0));
   var blueCheck = new DiffuseMaterial(new Vector3(0, 0, 1),
                                       new Vector3(0, 0, 0.4));
-  var plane = new Plane(new Vector3(0, 1, 0), -2,
+  var plane = new Plane(new Vector3(0, 1, 0), -4,
                         new CheckerMaterial(yellowCheck, blueCheck));
   g_objects.push(plane);
 
-  //var box = new Box(7, 3, 3, new Vector3(1,1,1),
-  //                  new AmbientMaterial(new Vector3(0,1,0)));
-  //g_objects.push(box);
+  var box = new Box(2, 2, 2, new Vector3(-3.5, -2.5, 1),
+                    new DiffuseMaterial(new Vector3(0, 1, 0),
+                                        new Vector3(0, 0.2, 0)));
+  g_objects.push(box);
 
   g_sampler = new Sampler(1);
 
@@ -112,7 +113,8 @@ void draw() {
           var shadeContext = {
             object: intersection.obj,
             ray: ray,
-            t: intersection.t
+            t: intersection.t,
+            normal: intersection.normal
           };
           var color = intersection.obj.shade(shadeContext);
           sampler.accumulateSample(color);

@@ -36,10 +36,23 @@
  * @constructor
  */
 function Sampler(numSamples) {
-  this.numSamples = numSamples;
+  /**
+   * @type {number}
+   * @private
+   */
+  this.numSamples_ = numSamples;
 
-  this.remainingSamples = numSamples;
-  this.colorAccumulator = new Vector3(0, 0, 0);
+  /**
+   * @type {number}
+   * @private
+   */
+  this.remainingSamples_ = numSamples;
+
+  /**
+   * @type {Vector3}
+   * @private
+   */
+  this.colorAccumulator_ = new Vector3(0, 0, 0);
 }
 
 
@@ -48,7 +61,7 @@ function Sampler(numSamples) {
  * @return {boolean} True if there is another sample point, False otherwise.
  */
 Sampler.prototype.hasNext = function() {
-  return this.remainingSamples > 0;
+  return this.remainingSamples_ > 0;
 };
 
 
@@ -58,15 +71,15 @@ Sampler.prototype.hasNext = function() {
  * @return {Vector2} The sample point.
  */
 Sampler.prototype.next = function() {
-  if (this.remainingSamples <= 0) {
+  if (this.remainingSamples_ <= 0) {
     return undefined;
   }
 
-  this.remainingSamples = this.remainingSamples - 1;
+  this.remainingSamples_ = this.remainingSamples_ - 1;
 
   // Setup state for accumulateSample().
   // For now we use a box filter.
-  this.sampleWeight = 1 / this.numSamples;
+  this.sampleWeight = 1 / this.numSamples_;
 
   return new Vector2(0, 0);
 };
@@ -77,8 +90,8 @@ Sampler.prototype.next = function() {
  */
 Sampler.prototype.reset = function() {
   // Reset for the next pixel.
-  this.remainingSamples = this.numSamples;
-  this.colorAccumulator.set(0, 0, 0);
+  this.remainingSamples_ = this.numSamples_;
+  this.colorAccumulator_.set(0, 0, 0);
 };
 
 
@@ -88,7 +101,7 @@ Sampler.prototype.reset = function() {
  * @param {Vector3} color The color for this sample.
  */
 Sampler.prototype.accumulateSample = function(color) {
-  this.colorAccumulator.addMul(color, this.sampleWeight);
+  this.colorAccumulator_.addMul(color, this.sampleWeight);
 };
 
 
@@ -97,5 +110,5 @@ Sampler.prototype.accumulateSample = function(color) {
  * @return {Vector3} Pixel color.
  */
 Sampler.prototype.result = function() {
-  return this.colorAccumulator;
+  return this.colorAccumulator_;
 };

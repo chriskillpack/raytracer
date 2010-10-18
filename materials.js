@@ -44,10 +44,10 @@ Material.prototype.evaluate = function(context) {
 
 /**
  * Compute the radiance of the material to the incoming light.
- * @param {{lightVisible:boolean, direction:Vector3, color:Vector3}}
- *     irradiance The light reaching the point on the material.
- * @param {Vector3} pos The world position of the shaded point.
- * @param {Vector3} normal The geometric normal of the shaded point.
+ * @param {Irradiance} irradiance The light reaching the point on the material.
+ * @param {Vector3} pos The world space position of the point to be shaded.
+ * @param {Vector3} normal The geometric normal of the shaded point in world
+ *     space.
  * @param {ShadeContext} context The shade context.
  * @return {Vector3} Material reflectance.
  * @private
@@ -85,11 +85,17 @@ AmbientMaterial.prototype.evaluate = function(context) {
 
 
 /**
- * Compute the reflectance of the material to the incoming light.
+ * Compute the radiance of the AmbientMaterial to the incoming light.
+ * @param {Irradiance} irradiance The light reaching the point on the material.
+ * @param {Vector3} pos The world space position of the point to be shaded.
+ * @param {Vector3} normal The geometric normal of the shaded point in world
+ *     space.
+ * @param {ShadeContext} context The shade context.
  * @return {Vector3} Material reflectance.
  * @private
  */
-AmbientMaterial.prototype.evaluateRadiance_ = function() {
+AmbientMaterial.prototype.evaluateRadiance_ = function(irradiance, pos, normal,
+                                                       context) {
   return this.color_;
 };
 
@@ -125,10 +131,7 @@ DiffuseMaterial.prototype.evaluate = function(context) {
   var worldPos = context.ray.pointOnRay(context.t);
 
   var color = new Vector3(0, 0, 0);
-  g_lights.forEachLight(function(light) {
-    // Evaluate the light with respect to this surface point.
-    var incidentLight = light.evaluateLight(worldPos, context.normal);
-
+  g_lights.forEachLight(worldPos, context.normal, function(incidentLight) {
     // Compute the material's response to the incoming light.
     var c = this.evaluateRadiance_(incidentLight, worldPos, context.normal);
     color.add(c);
@@ -142,10 +145,9 @@ DiffuseMaterial.prototype.evaluate = function(context) {
 
 /**
  * Compute the reflectance of the material to the incoming light.
- * @param {{lightVisible:boolean, direction:Vector3, color:Vector3}}
- *     irradiance The light reaching the point on the material.
- * @param {Vector3} pos The world position of the shaded point.
- * @param {Vector3} normal The geometric normal of the shaded point.
+ * @param {Irradiance} irradiance The light reaching the point on the material.
+ * @param {Vector3} pos The world space position of the point to be shaded.
+ * @param {Vector3} normal The geometric normal of the point to be shaded.
  * @param {ShadeContext} context The shade context.
  * @return {Vector3} Material reflectance.
  * @private
@@ -203,10 +205,7 @@ SpecularMaterial.prototype.evaluate = function(context) {
 
   var diffuseColor = new Vector3(0, 0, 0);
   var specularColor = new Vector3(0, 0, 0);
-  g_lights.forEachLight(function(light) {
-    // Evaluate the light with respect to this surface point.
-    var incidentLight = light.evaluateLight(worldPos, context.normal);
-
+  g_lights.forEachLight(worldPos, context.normal, function(incidentLight) {
     // Compute the diffuse material's reaction to the incident light.
     diffuseColor.add(
       this.diffuseMaterial_.evaluateRadiance_(
@@ -224,8 +223,7 @@ SpecularMaterial.prototype.evaluate = function(context) {
 
 /**
  * Compute the reflectance of the material to the incoming light.
- * @param {{lightVisible:boolean, direction:Vector3, color:Vector3}}
- *     irradiance The light reaching the point on the material.
+ * @param {Irradiance} irradiance The light reaching the point on the material.
  * @param {Vector3} pos The world position of the shaded point.
  * @param {Vector3} normal The geometric normal of the shaded point.
  * @param {ShadeContext} context The shade context.
@@ -254,42 +252,6 @@ function CheckerMaterial(material1, material2, size) {
   this.size = size;
 }
 
-
-/**
- * Returns the fractional part of a number.
- * @param {number} x The input value.
- * @return {number} The fractional part of x.
- * @private
- */
-// TODO: Convert to constructor local function.
-CheckerMaterial.frac_ = function(x) {
-  return x - Math.floor(x);
-};
-
-
-/**
- * Returns whether a number is even.
- * @param {number} x The input value.
- * @return {boolean} True if the number is even.
- * @private
- */
-CheckerMaterial.even_ = function(x) {
- return CheckerMaterial.frac_(x / 2) < 1e-1;
-};
-
-
-/**
- * Perform a logical XOR of the two inputs.
- * @param {boolean} a One input.
- * @param {boolean} b The other input.
- * @return {boolean} The logical XOR of the two inputs.
- * @private
- */
-CheckerMaterial.xor_ = function(a, b) {
-  return (a && !b) || (!a && b);
-};
-
-
 /**
  * Evaluate the material with the shade context.
  * @param {ShadeContext} context The shade context.
@@ -298,8 +260,8 @@ CheckerMaterial.xor_ = function(a, b) {
 CheckerMaterial.prototype.evaluate = function(context) {
   // Compute the world position
   var worldPos = context.ray.pointOnRay(context.t);
-  var x = CheckerMaterial.even_(Math.floor(worldPos.x / 4));
-  var z = CheckerMaterial.even_(Math.floor(worldPos.z / 4));
-  var material = CheckerMaterial.xor_(x, z) ? this.material1 : this.material2;
+  var x = Math.floor(worldPos.x / 4) & 1;
+  var z = Math.floor(worldPos.z / 4) & 1;
+  var material = (x ^ z) ? this.material1 : this.material2;
   return material.evaluate(context);
 };

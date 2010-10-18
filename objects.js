@@ -19,6 +19,45 @@
 // THE SOFTWARE.
 
 /**
+ * The base class for all scene objects.
+ * @param {Material} material The object's material.
+ * @constructor
+ */
+function Object(material) {
+  /**
+   * @type {Material}
+   * @private
+   */
+  this.material_ = material;
+}
+
+
+/**
+ * Invoke the object's material to shade the intersection point.
+ * @param {RayContext} context The constructed context of the ray
+ *     intersection.
+ * @return {Vector3} The color output of the shade operation.
+ */
+Object.prototype.shade = function(context) {
+  return this.material_.evaluate(context);
+};
+
+
+/**
+ * Perform a ray-object intersection test. This function must be implemented
+ * by all classes that inherit from Object.
+ * @param {Ray} ray The ray to be tested.
+ * @return {{t: number, normal: Vector3}} t holds the parametric distance along
+ *     the ray to the closest point of intersection with the object, normal
+ *     holds the object normal at the point of intersection. If there is no
+ *     intersection then undefined is returned.
+ */
+Object.prototype.intersect = function(ray) {
+  throw 'intersect is not implemented.';
+};
+
+
+/**
  * Implement a Sphere primitive.
  * @param {Vector3} center The center of the sphere.
  * @param {number} radius The radius of the sphere.
@@ -26,6 +65,8 @@
  * @constructor
  */
 function Sphere(center, radius, material) {
+  Object.call(this, material);
+
   /**
    * @type {Vector3}
    * @private
@@ -37,20 +78,16 @@ function Sphere(center, radius, material) {
    * @private
    */
   this.radius_ = radius;
-
-  /**
-   * @type {Material}
-   * @private
-   */
-  this.material_ = material;
 }
-
+Sphere.prototype = new Object();
 
 /**
  * Perform a ray-sphere intersection test.
  * @param {Ray} ray The ray to be tested.
- * @return {Array.<number>} The array of the ray's parametrics values at
- *     points of intersection with the sphere.
+ * @return {{t: number, normal: Vector3}} t holds the parametric distance along
+ *     the ray to the closest point of intersection with the sphere, normal
+ *     holds the sphere normal at the point of intersection. If there is no
+ *     intersection then undefined is returned.
  */
 Sphere.prototype.intersect = function(ray) {
   /**
@@ -64,21 +101,23 @@ Sphere.prototype.intersect = function(ray) {
 
   var discrim_sq = b * b - 4 * a * c;
   if (discrim_sq < 0) {
-    return [];
+    return undefined;
   }
 
-  var intersections = new Array();
   var discrim = Math.sqrt(discrim_sq);
   if (Math.abs(discrim_sq) > 1e-2) {
-    // Two intersections
-    intersections.push((-b - discrim) / (2 * a));
-    intersections.push((-b + discrim) / (2 * a));
+    // Two intersections, return the closer one. For reference the other is at
+    // (-b + discrim) / (2 * a).
+    var t = (-b - discrim) / (2 * a);
   } else {
-    // Glancing, one solution
-    intersections.push(-b / (2 * a));
+    // Glancing intersection, with one solution.
+    var t = -b / (2 * a);
   }
 
-  return intersections;
+  var r = {};
+  r.t = t;
+  r.normal = this.normal(ray, t);
+  return r;
 };
 
 
@@ -97,18 +136,6 @@ Sphere.prototype.normal = function(ray, t) {
 
 
 /**
- * Invoke the object's material to shade the intersection point.
- * @param {RayContext} context The constructed context of the ray
- *     intersection.
- * @return {Vector3} The color output of the shade operation.
- */
-Sphere.prototype.shade = function(context) {
-  context.normal = this.normal(context.ray, context.t);
-  return this.material_.evaluate(context);
-};
-
-
-/**
  * Implements a plane primitive.
  * @param {Vector3} normal The plane normal.
  * @param {number} offset The distance of the plane along the normal from
@@ -117,6 +144,8 @@ Sphere.prototype.shade = function(context) {
  * @constructor
  */
 function Plane(normal, offset, material) {
+  Object.call(this, material);
+
   /**
    * @type {Vector3} normal
    * @private
@@ -128,20 +157,17 @@ function Plane(normal, offset, material) {
    * @private
    */
   this.offset_ = offset;
-
-  /**
-   * @type {Material}
-   * @private
-   */
-  this.material_ = material;
 }
+Plane.prototype = new Object();
 
 
 /**
  * Test for an intersection between the ray and the plane.
  * @param {Ray} ray The ray to intersect with the plane.
- * @return {Array.<number>} The array of the ray's parametrics values at
- *     points of intersection with the plane.
+ * @return {{t: number, normal: Vector3}} t holds the parametric distance along
+ *     the ray to the closest point of intersection with the plane, normal
+ *     holds the plane normal at the point of intersection. If there is no
+ *     intersection then undefined is returned.
  */
 Plane.prototype.intersect = function(ray) {
   /**
@@ -150,28 +176,19 @@ Plane.prototype.intersect = function(ray) {
   var Vd = Vector3.dot(this.normal_, ray.direction);
   if (Math.abs(Vd) < 1e-2) {
     // Parallel to the plane, no intersection
-    return [];
+    return undefined;
   }
   var V0 = -(Vector3.dot(this.normal_, ray.origin) - this.offset_);
   var t = V0 / Vd;
   if (t < 0) {
-    // Intersection is behind eye origin, ignore
-    return [];
+    // Intersection is behind ray origin, ignore.
+    return undefined;
   }
 
-  return [t];
-};
-
-
-/**
- * Invoke the object's material to shade the intersection point.
- * @param {RayContext} context The constructed context of the ray
- *     intersection.
- * @return {Vector3} The color output of the shade operation.
- */
-Plane.prototype.shade = function(context) {
-  context.normal = this.normal_;
-  return this.material_.evaluate(context);
+  var r = {};
+  r.t = t;
+  r.normal = this.normal_;
+  return r;
 };
 
 
@@ -184,16 +201,11 @@ Plane.prototype.shade = function(context) {
  * @constructor
  */
 function Box(width, height, depth, center, material) {
+  Object.call(this, material);
+
   var width2 = width / 2;
   var height2 = height / 2;
   var depth2 = depth / 2;
-
-  /**
-   * The material used for shading.
-   * @type {Material}
-   * @private
-   */
-  this.material_ = material;
 
   /**
    * The 'minimal' corner of the AABB.
@@ -209,6 +221,7 @@ function Box(width, height, depth, center, material) {
    */
   this.p1_ = Vector3.add(center, new Vector3(width2, height2, depth2));
 }
+Box.prototype = new Object();
 
 
 /**
@@ -243,53 +256,71 @@ Box.prototype.intersect = function(ray) {
   }
 
   // Find the biggest of txMin, tyMin and tzMin.
-  var t0 = Math.max(txMin, Math.max(tyMin, tzMin));
+  // Also tracks the normal of the intersecting face.
+  var t0 = txMin;
+  var normal = new Vector3(-Box.sign_(ray.direction.x), 0, 0);
+  if (t0 < tyMin) {
+    t0 = tyMin;
+    normal = new Vector3(0, -Box.sign_(ray.direction.y), 0);
+  }
+  if (t0 < tzMin) {
+    t0 = tzMin;
+    normal = new Vector3(0, 0, -Box.sign_(ray.direction.z));
+  }
+
   // Find the smallest of txMax, tyMax and tzMax.
   var t1 = Math.min(txMax, Math.min(tyMax, tzMax));
   if (t0 < t1) {
-    // Intersection.
-    return [t0, t1];
+    // Intersection. The two points of intersection are [t0, t1], but only
+    // the closer point is returned.
+    var r = {};
+    r.t = t0;
+    r.normal = normal;
+    return r;
   }
 
   // No intersection.
-  return [];
+  return undefined;
 };
 
 
 /**
- * Invoke the object's material to shade the intersection point.
- * @param {RayContext} context The constructed context of the ray
- *     intersection.
- * @return {Vector3} The color output of the shade operation.
+ * Return the sign of a number.
+ * @param {number} x The number to be tested.
+ * @return {number} -1 if the input is negative, 1 if it is positive, 0
+ *     otherwise.
+ * @private
  */
-Box.prototype.shade = function(context) {
-  // HACK!
-  context.normal = new Vector3(0, 1, 0);
-  return this.material_.evaluate(context);
+Box.sign_ = function(x) {
+  if (Math.abs(x) < 1e-5) {
+    return 0;
+  }
+
+  return (x < 0) ? -1 : 1;
 };
 
 
+/**
+ * Test all objects in the scene for intersection with the ray.
+ * @param {Ray} ray The ray to intersect with the scene.
+ * @return {{t: number, normal: Vector3, obj: Object}} The closest intersection
+ *     along the ray, the normal at the point of intersection and the object
+ *     that intersected the ray, or undefined if the ray does not intersect
+ *     any objects.
+ */
 // TODO: Make this a method of an scene container.
 // TODO: This function should test ray segments against objects for
 // intersection.
-function intersectRayWithScene(ray, opt_stopOnFirstIntersection,
-                               opt_skipObject) {
+function intersectRayWithScene(ray) {
   var closest_t = Infinity;
   var closest_obj = undefined;
+  var closest_intersection = undefined;
   for (var objectIdx = 0; objectIdx < g_objects.length; objectIdx++) {
-    if (g_objects[objectIdx] == opt_skipObject) {
-      continue;
-    }
-
-    var t = g_objects[objectIdx].intersect(ray);
-    for (var items = 0; items < t.length; items++) {
-      if (t[items] < closest_t) {
-        closest_t = t[items];
-        closest_obj = g_objects[objectIdx];
-      }
-    }
-    if (closest_obj && opt_stopOnFirstIntersection) {
-      break;
+    var intersect = g_objects[objectIdx].intersect(ray);
+    if (intersect && intersect.t < closest_t) {
+      closest_t = intersect.t;
+      closest_obj = g_objects[objectIdx];
+      closest_intersection = intersect;
     }
   }
 
@@ -301,6 +332,7 @@ function intersectRayWithScene(ray, opt_stopOnFirstIntersection,
   // statements. So we break it apart for now.
   var r = {};
   r.t = closest_t;
+  r.normal = closest_intersection.normal;
   r.obj = closest_obj;
   return r;
 }
