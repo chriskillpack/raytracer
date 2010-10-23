@@ -52,7 +52,7 @@ function Sampler(numSamples) {
    * @type {Vector3}
    * @private
    */
-  this.colorAccumulator_ = new Vector3(0, 0, 0);
+  this.colorAccumulator_ = new Vector3();
 }
 
 

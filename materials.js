@@ -38,7 +38,7 @@ function Material() {
  */
 Material.prototype.evaluate = function(context) {
   throw 'evaluate is not implemented.';
-  return new Vector3(0, 0, 0);
+  return new Vector3();
 };
 
 
@@ -55,7 +55,7 @@ Material.prototype.evaluate = function(context) {
 Material.prototype.evaluateRadiance_ = function(irradiance, pos, normal,
                                                 context) {
   throw 'evaluateRadiance_ is not implemented.';
-  return new Vector3(0, 0, 0);
+  return new Vector3();
 };
 
 
@@ -117,7 +117,7 @@ function DiffuseMaterial(color, opt_ambientColor) {
    * @type {Vector3}
    * @private
    */
-  this.ambientColor_ = opt_ambientColor || new Vector3(0, 0, 0);
+  this.ambientColor_ = opt_ambientColor || new Vector3();
 }
 DiffuseMaterial.prototype = new Material();
 
@@ -130,7 +130,7 @@ DiffuseMaterial.prototype = new Material();
 DiffuseMaterial.prototype.evaluate = function(context) {
   var worldPos = context.ray.pointOnRay(context.t);
 
-  var color = new Vector3(0, 0, 0);
+  var color = new Vector3();
   g_lights.forEachLight(worldPos, context.normal, function(incidentLight) {
     // Compute the material's response to the incoming light.
     var c = this.evaluateRadiance_(incidentLight, worldPos, context.normal);
@@ -161,7 +161,7 @@ DiffuseMaterial.prototype.evaluateRadiance_ = function(irradiance, pos,
     c.componentScale(this.color_);
     return c;
   } else {
-    return new Vector3(0, 0, 0);
+    return new Vector3();
   }
 };
 
@@ -203,8 +203,8 @@ SpecularMaterial.prototype = new Material();
 SpecularMaterial.prototype.evaluate = function(context) {
   var worldPos = context.ray.pointOnRay(context.t);
 
-  var diffuseColor = new Vector3(0, 0, 0);
-  var specularColor = new Vector3(0, 0, 0);
+  var diffuseColor = new Vector3();
+  var specularColor = new Vector3();
   g_lights.forEachLight(worldPos, context.normal, function(incidentLight) {
     // Compute the diffuse material's reaction to the incident light.
     diffuseColor.add(
