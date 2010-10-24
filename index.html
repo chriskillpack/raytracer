@@ -1,17 +1,13 @@
 <html>
 <head>
   <title>A raytracer in JavaScript</title>
-  <script type="text/javascript" src="processing-0.9.7.min.js"></script>
-  <script type="text/javascript" src="bootstrap-processing.js"></script>
   <script type="text/javascript" src="vector.js"></script>
   <script type="text/javascript" src="ray.js"></script>
   <script type="text/javascript" src="objects.js"></script>
   <script type="text/javascript" src="materials.js"></script>
   <script type="text/javascript" src="lights.js"></script>
   <script type="text/javascript" src="sampler.js"></script>
-  <script type="text/javascript">
-    initProcessing("raytracer.js", "rt_canvas");
-  </script>
+  <script type="text/javascript" src="raytracer.js"></script>
   <script type="text/javascript">
     var _gaq = _gaq || [];
     _gaq.push(['_setAccount', 'UA-16538421-1']);
@@ -37,7 +33,7 @@
   </td>
   <td>
     <div style="width:30em">
-      The raytracer is written entirely in JavaScript. It uses an HTML5 <i>canvas</i> element to display the image, which is managed by <a href="http://processingjs.org">Processing.js</a>. In time I will be removing the Processing code.
+      The raytracer is written entirely in JavaScript. It uses an HTML5 <i>canvas</i> element to display the image.
       <br><br>
       The raytracer currently supports plane, sphere and box primitives, a material system, multiple lights and multi-sampling in image space. Over time interactive features will be added.
     </div>
@@ -51,5 +47,8 @@
 <p><b>Code</b>: I've released the <a href="http://github.com/chriskillpack/raytracer">source code</a> on GitHub under the MIT license.
 </ul>
 </div>
+<script type="text/javascript">
+  init('rt_canvas');
+</script>
 </body>
 </html>

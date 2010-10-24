@@ -72,21 +72,23 @@ Vector3.prototype.normalize = function() {
   return this;
 };
 
+
 /**
- * Compute the dot product between two vectors: a . b
- * @param {Vector3} a Input vector.
- * @param {Vector3} b Input vector.
- * @return {number} The dot product of a & b.
+ * Compute the dot product of two vectors.
+ * @param {Vector3} a A vector.
+ * @param {Vector3} b Another vector.
+ * @return {number} The dot product of a and b.
  */
 Vector3.dot = function(a, b) {
   return a.x * b.x + a.y * b.y + a.z * b.z;
 };
 
+
 /**
- * Subtract two vectors and return the result in a new Vector3: a - b
- * @param {Vector3} a The vector to subtract from.
- * @param {Vector3} b The vector to subtract.
- * @return {Vector3} Result of the subtraction.
+ * Subtract two Vector3's and returns the result in a new Vector3.
+ * @param {Vector3} a The first vector.
+ * @param {Vector3} b The second vector.
+ * @return {Vector3} The new Vector3.
  */
 Vector3.subtract = function(a, b) {
   return new Vector3(a.x - b.x, a.y - b.y, a.z - b.z);
@@ -94,10 +96,10 @@ Vector3.subtract = function(a, b) {
 
 
 /**
- * Add two vectors together and return the result in a new instance.
- * @param {Vector3} a One of the vectors.
- * @param {Vector3} b The other vector.
- * @return {Vector3} Result of the addition.
+ * Add two Vector3's and returns the result in a new Vector3.
+ * @param {Vector3} a The first vector.
+ * @param {Vector3} b The second vector.
+ * @return {Vector3} The new Vector3.
  */
 Vector3.add = function(a, b) {
   return new Vector3(a.x + b.x, a.y + b.y, a.z + b.z);
@@ -105,9 +107,9 @@ Vector3.add = function(a, b) {
 
 
 /**
- * Add a vector onto this instance.
- * @param {Vector3} v The vector to be added in.
- * @return {Vector3} The instance, to allow for chaining.
+ * Add another Vector3 to this Vector3.
+ * @param {Vector3} v The vector to be added.
+ * @return {Vector3} This instance, to allow for chaining.
  */
 Vector3.prototype.add = function(v) {
   this.x += v.x;
@@ -154,6 +156,7 @@ Vector3.componentScale = function(v, factor) {
                      v.y * factor.y,
                      v.z * factor.z);
 };
+
 
 /**
  * Perform a component-wise scaling of the vector.
@@ -213,6 +216,25 @@ Vector3.negate = function(v) {
  */
 Vector3.prototype.length = function() {
   return Math.sqrt(this.x * this.x + this.y * this.y + this.z * this.z);
+};
+
+
+/**
+ * Clamps the components of this Vector3 within the specified limits.
+ * @param {?number} opt_min The minimum value a component can have. Defaults
+ *     to 0.
+ * @param {?number} opt_max The maximum value a component can have. Defaults
+ *     to 1.
+ * @return {Vector3} This to allow for chaining.
+ */
+Vector3.prototype.clamp = function(opt_min, opt_max) {
+  var min = opt_min || 0;
+  var max = opt_max || 1;
+
+  this.x = Math.max(min, Math.min(this.x, max));
+  this.y = Math.max(min, Math.min(this.y, max));
+  this.z = Math.max(min, Math.min(this.z, max));
+  return this;
 };
 
 

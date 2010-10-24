@@ -23,7 +23,7 @@
  * @param {Material} material The object's material.
  * @constructor
  */
-function Object(material) {
+function SceneObject(material) {
   /**
    * @type {Material}
    * @private
@@ -38,21 +38,21 @@ function Object(material) {
  *     intersection.
  * @return {Vector3} The color output of the shade operation.
  */
-Object.prototype.shade = function(context) {
+SceneObject.prototype.shade = function(context) {
   return this.material_.evaluate(context);
 };
 
 
 /**
  * Perform a ray-object intersection test. This function must be implemented
- * by all classes that inherit from Object.
+ * by all classes that inherit from SceneObject.
  * @param {Ray} ray The ray to be tested.
  * @return {{t: number, normal: Vector3}} t holds the parametric distance along
  *     the ray to the closest point of intersection with the object, normal
  *     holds the object normal at the point of intersection. If there is no
  *     intersection then undefined is returned.
  */
-Object.prototype.intersect = function(ray) {
+SceneObject.prototype.intersect = function(ray) {
   throw 'intersect is not implemented.';
 };
 
@@ -65,7 +65,7 @@ Object.prototype.intersect = function(ray) {
  * @constructor
  */
 function Sphere(center, radius, material) {
-  Object.call(this, material);
+  SceneObject.call(this, material);
 
   /**
    * @type {Vector3}
@@ -79,7 +79,7 @@ function Sphere(center, radius, material) {
    */
   this.radius_ = radius;
 }
-Sphere.prototype = new Object();
+Sphere.prototype = new SceneObject();
 
 /**
  * Perform a ray-sphere intersection test.
@@ -114,10 +114,10 @@ Sphere.prototype.intersect = function(ray) {
     var t = -b / (2 * a);
   }
 
-  var r = {};
-  r.t = t;
-  r.normal = this.normal(ray, t);
-  return r;
+  return {
+    t: t,
+    normal: this.normal(ray, t)
+  };
 };
 
 
@@ -130,8 +130,7 @@ Sphere.prototype.intersect = function(ray) {
 Sphere.prototype.normal = function(ray, t) {
   var worldPos = ray.pointOnRay(t);
   var v = Vector3.subtract(worldPos, this.center_);
-  v.normalize();
-  return v;
+  return v.normalize();
 };
 
 
@@ -144,7 +143,7 @@ Sphere.prototype.normal = function(ray, t) {
  * @constructor
  */
 function Plane(normal, offset, material) {
-  Object.call(this, material);
+  SceneObject.call(this, material);
 
   /**
    * @type {Vector3} normal
@@ -158,7 +157,7 @@ function Plane(normal, offset, material) {
    */
   this.offset_ = offset;
 }
-Plane.prototype = new Object();
+Plane.prototype = new SceneObject();
 
 
 /**
@@ -185,10 +184,10 @@ Plane.prototype.intersect = function(ray) {
     return undefined;
   }
 
-  var r = {};
-  r.t = t;
-  r.normal = this.normal_;
-  return r;
+  return {
+    t: t,
+    normal: this.normal_
+  };
 };
 
 
@@ -201,7 +200,7 @@ Plane.prototype.intersect = function(ray) {
  * @constructor
  */
 function Box(width, height, depth, center, material) {
-  Object.call(this, material);
+  SceneObject.call(this, material);
 
   var width2 = width / 2;
   var height2 = height / 2;
@@ -221,7 +220,7 @@ function Box(width, height, depth, center, material) {
    */
   this.p1_ = Vector3.add(center, new Vector3(width2, height2, depth2));
 }
-Box.prototype = new Object();
+Box.prototype = new SceneObject();
 
 
 /**
@@ -273,10 +272,10 @@ Box.prototype.intersect = function(ray) {
   if (t0 < t1) {
     // Intersection. The two points of intersection are [t0, t1], but only
     // the closer point is returned.
-    var r = {};
-    r.t = t0;
-    r.normal = normal;
-    return r;
+    return {
+      t: t0,
+      normal: normal
+    };
   }
 
   // No intersection.
@@ -303,7 +302,7 @@ Box.sign_ = function(x) {
 /**
  * Test all objects in the scene for intersection with the ray.
  * @param {Ray} ray The ray to intersect with the scene.
- * @return {{t: number, normal: Vector3, obj: Object}} The closest intersection
+ * @return {{t: number, normal: Vector3, obj: SceneObject}} The closest intersection
  *     along the ray, the normal at the point of intersection and the object
  *     that intersected the ray, or undefined if the ray does not intersect
  *     any objects.
@@ -328,11 +327,9 @@ function intersectRayWithScene(ray) {
     return undefined;
   }
 
-  // Processing causes a headache building object literals on return
-  // statements. So we break it apart for now.
-  var r = {};
-  r.t = closest_t;
-  r.normal = closest_intersection.normal;
-  r.obj = closest_obj;
-  return r;
+  return {
+    t: closest_t,
+    normal: closest_intersection.normal,
+    obj: closest_obj
+  };
 }

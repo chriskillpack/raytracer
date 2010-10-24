@@ -18,6 +18,77 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 // THE SOFTWARE.
 
+var g_context;
+var g_frameCount;
+var g_width;
+var g_height;
+
+function init(canvasId) {
+  var canvas = document.getElementById(canvasId);
+  if (!canvas) {
+    return;
+  }
+  g_context = canvas.getContext('2d');
+
+  g_width = g_context.canvas.width;
+  g_height = g_context.canvas.height;
+  g_frameCount = 0;
+
+  initScene();
+
+  setInterval(function() {
+    draw();
+    g_frameCount = g_frameCount + 1;
+  }, 1000 / 30);
+}
+
+
+/**
+ * Convert a Vector3 into a CSS color string.
+ * @param {Vector3} c Color.
+ * @return {string} CSS rgb color.
+ */
+function colorToString(c) {
+  return 'rgb(' + Math.floor(c.x) + ',' + Math.floor(c.y) + ','
+         + Math.floor(c.z) + ')';
+}
+
+
+/**
+ * Clear the canvas to the specified color.
+ * @param {CanvasRenderingContext2D} context The 2D rendering context for a
+ *     canvas element.
+ * @param {Vector3} color The color to set the canvas to.
+ */
+function clearBackground(context, color) {
+  var c = Vector3.copyFrom(color);
+  c.clamp().componentScale(new Vector3(255, 255, 255));
+
+  context.fillStyle = colorToString(c);
+  context.fillRect(0, 0, context.canvas.width, context.canvas.height);
+}
+
+
+/**
+ * Set a pixel in the canvas to the specified color.
+ * @param {CanvasRenderingContext2D} context The 2D rendering context for a
+ *     canvas element.
+ * @param {number} x The x co-ordinate of the pixel.
+ * @param {number} y The y co-ordinate of the pixel.
+ * @param {Vector3} color The color to set the pixel.
+ */
+function setPixel(context, x, y, color) {
+  var c = Vector3.copyFrom(color);
+  c.clamp().componentScale(new Vector3(255, 255, 255));
+
+  context.fillStyle = colorToString(c);
+  context.fillRect(x, y, 1, 1);
+}
+
+
+/**
+ * Initialize the scene.
+ */
 function initScene() {
   g_lights = new Lights();
   g_lights.addLight(new DirectionalLight(new Vector3(0, -1, 0),
@@ -53,14 +124,6 @@ function initScene() {
 }
 
 
-void setup() {
-  size(128, 128);
-  frameRate(30);
-
-  initScene();
-}
-
-
 /**
  * Construct a ray that passes through the screen pixel position.
  * @param {number} sx X component of the screen co-ordinate.
@@ -68,8 +131,8 @@ void setup() {
  * @return {Ray} A ray that passes through the screen pixel.
  */
 function buildRay(sx, sy) {
-  var width2 = width / 2;
-  var height2 = height / 2;
+  var width2 = g_width / 2;
+  var height2 = g_height / 2;
 
   var x = ((sx - width2) / width2) * 5;
   var y = ((height2 - sy) / height2) * 5;
@@ -80,22 +143,22 @@ function buildRay(sx, sy) {
 }
 
 
-void draw() {
+/**
+ * Draw the scene.
+ */
+function draw() {
   // Update the sphere's Y coordinate.
   // TODO: Once transforms are introduced, this should be done by setting
   // the sphere's transform, not by directly modifying a private variable.
-  g_sphere.center_.y = (0.5 + Math.sin(frameCount)) * 3;
+  g_sphere.center_.y = (0.5 + Math.sin(g_frameCount)) * 3;
 
-  background(0);
+  clearBackground(g_context, new Vector3());
 
   var sampler = g_sampler;
 
-  var width2 = width / 2;
-  var height2 = height / 2;
-
   // Trace rays
-  for (var i = 0; i < height; i++) {
-    for (var j = 0; j < width; j++) {
+  for (var i = 0; i < g_height; i++) {
+    for (var j = 0; j < g_width; j++) {
       sampler.reset();
 
       while (sampler.hasNext()) {
@@ -121,8 +184,7 @@ void draw() {
         }
       }
       var pixelColor = sampler.result();
-      stroke(pixelColor.x * 255, pixelColor.y * 255, pixelColor.z * 255);
-      point(j, i);
+      setPixel(g_context, j, i, pixelColor);
     }
   }
 }
